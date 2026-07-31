@@ -62,7 +62,7 @@ val preparePreviewIndex by tasks.registering {
     doLast {
         val destination = outputDir.get().asFile
         destination.mkdirs()
-        val pattern = Regex("""<string\\s+name=\"([^\"]+)\"""")
+        val pattern = Regex("<string\\s+name=\"([^\"]+)\"")
         val reviewed = sourceFile.readLines()
             .take(704)
             .mapIndexedNotNull { index, line ->
