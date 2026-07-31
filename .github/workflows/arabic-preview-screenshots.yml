@@ -1,0 +1,82 @@
+name: Arabic Preview Screenshots
+
+on:
+  pull_request:
+    branches:
+      - translation/arabic
+    paths:
+      - 'preview/**'
+      - 'app/src/main/res/values/strings.xml'
+      - 'app/src/main/res/values-ar-rSA/strings.xml'
+      - 'settings.gradle.kts'
+      - 'gradle/**'
+      - '.github/workflows/arabic-preview-screenshots.yml'
+  workflow_dispatch:
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Build preview APK
+        run: ./gradlew :preview:assembleDebug --stacktrace
+
+      - name: Capture Arabic preview screenshots
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            set -eux
+            mkdir -p preview-artifacts
+            adb install -r preview/build/outputs/apk/debug/preview-debug.apk
+            adb shell am force-stop com.mohdalyahri.essentials.preview
+            adb shell am start -n com.mohdalyahri.essentials.preview/com.mohdalyahri.essentialspreview.MainActivity
+            sleep 5
+            adb exec-out screencap -p > preview-artifacts/01-home.png
+            adb shell input swipe 540 1800 540 500 700
+            sleep 2
+            adb exec-out screencap -p > preview-artifacts/02-home-scrolled.png
+            adb shell input tap 540 650
+            sleep 3
+            adb exec-out screencap -p > preview-artifacts/03-section.png
+            adb shell input swipe 540 1800 540 500 700
+            sleep 2
+            adb exec-out screencap -p > preview-artifacts/04-section-scrolled.png
+            adb shell screenrecord --time-limit 12 /sdcard/preview.mp4 &
+            sleep 2
+            adb shell input keyevent KEYCODE_BACK
+            sleep 2
+            adb shell input swipe 540 1800 540 500 700
+            sleep 2
+            adb shell input tap 540 1000
+            sleep 3
+            wait || true
+            adb pull /sdcard/preview.mp4 preview-artifacts/preview.mp4 || true
+
+      - name: Upload screenshots and video
+        uses: actions/upload-artifact@v4
+        with:
+          name: essentials-arabic-preview
+          path: preview-artifacts/
+          if-no-files-found: error
+          retention-days: 7
