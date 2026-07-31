@@ -43,23 +43,23 @@ jobs:
           arch: x86_64
           profile: pixel_6
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          disable-animations: true
+          disable-animations: false
           script: |
             set -eux
             mkdir -p preview-artifacts
             adb install -r preview/build/outputs/apk/debug/preview-debug.apk
             adb shell am force-stop com.mohdalyahri.essentials.preview
             adb shell am start -n com.mohdalyahri.essentials.preview/com.mohdalyahri.essentialspreview.MainActivity
-            sleep 5
+            sleep 7
             adb exec-out screencap -p > preview-artifacts/01-home.png
             adb shell input swipe 540 1800 540 500 700
-            sleep 2
+            sleep 3
             adb exec-out screencap -p > preview-artifacts/02-home-scrolled.png
             adb shell input tap 540 650
-            sleep 3
+            sleep 4
             adb exec-out screencap -p > preview-artifacts/03-section.png
             adb shell input swipe 540 1800 540 500 700
-            sleep 2
+            sleep 3
             adb exec-out screencap -p > preview-artifacts/04-section-scrolled.png
             adb shell screenrecord --time-limit 12 /sdcard/preview.mp4 &
             sleep 2
@@ -73,9 +73,10 @@ jobs:
             adb pull /sdcard/preview.mp4 preview-artifacts/preview.mp4 || true
 
       - name: Upload screenshots and video
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: essentials-arabic-preview
           path: preview-artifacts/
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 7
