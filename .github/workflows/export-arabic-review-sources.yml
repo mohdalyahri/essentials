@@ -1,0 +1,30 @@
+name: Export Arabic Review Sources
+
+on:
+  pull_request:
+    branches:
+      - translation/arabic
+    paths:
+      - '.github/workflows/export-arabic-review-sources.yml'
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare review sources
+        run: |
+          mkdir -p review-sources
+          cp app/src/main/res/values/strings.xml review-sources/strings_en.xml
+          cp app/src/main/res/values-ar-rSA/strings.xml review-sources/strings_ar.xml
+
+      - name: Upload review sources
+        uses: actions/upload-artifact@v4
+        with:
+          name: arabic-review-sources
+          path: review-sources/
+          if-no-files-found: error
+          retention-days: 7

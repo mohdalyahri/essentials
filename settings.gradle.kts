@@ -25,4 +25,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Essentials"
 include(":app")
- 
+include(":preview")
